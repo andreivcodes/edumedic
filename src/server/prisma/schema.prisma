@@ -1,0 +1,99 @@
+generator client {
+    provider        = "prisma-client-js"
+    previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+    provider     = "sqlite"
+    url          = env("DATABASE_URL")
+    relationMode = "foreignKeys"
+}
+
+model User {
+    id String @id @default(uuid())
+
+    name  String?
+    email String  @unique
+
+    sessions Session[]
+    tests    User_Tests[]
+
+    @@map("user")
+}
+
+model Session {
+    id        String   @id
+    userId    String
+    expiresAt DateTime
+    user      User     @relation(references: [id], fields: [userId], onDelete: Cascade)
+
+    @@map("session")
+}
+
+model Question {
+    id String @id @default(uuid())
+
+    text    String  @unique
+    hint    String?
+    details String?
+
+    answers Answer[] @relation("question_answers")
+
+    TestQuestion TestQuestion[]
+
+    @@map("questions")
+}
+
+model Answer {
+    id String @id @default(uuid())
+
+    text       String
+    is_correct Boolean
+
+    question_answer     String
+    question_answer_ref Question? @relation("question_answers", fields: [question_answer], references: [id])
+
+    @@map("answer")
+}
+
+model User_Tests {
+    id String @id @default(uuid())
+
+    user_id String
+    user    User   @relation(fields: [user_id], references: [id])
+
+    finished Boolean  @default(false)
+    passed   Boolean?
+
+    generated_timestamp DateTime
+    started_timestamp   DateTime?
+
+    test_questions TestQuestion[]
+
+    @@map("user_tests")
+}
+
+model TestQuestion {
+    id String @id @default(uuid())
+
+    answered          Boolean
+    question_id       String
+    question          Question     @relation(fields: [question_id], references: [id])
+    given_answers_ids TestAnswer[]
+
+    test   User_Tests @relation(fields: [testId], references: [id])
+    testId String
+
+    @@map("test_question")
+}
+
+model TestAnswer {
+    id String @id @default(uuid())
+
+    answer_id String
+
+    test_question    TestQuestion @relation(fields: [test_question_id], references: [id])
+    test_question_id String
+
+    @@map("test_answer")
+}
